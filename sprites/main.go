@@ -12,9 +12,13 @@ func init() {
  
 func main() {
  
-    ticker := time.NewTicker(time.Second / 30)
- 
+    delta := float32(0)
+    ticker := time.NewTicker(time.Second / 60)
     renderWindow := sf.NewRenderWindow(sf.VideoMode{800, 600, 32}, "Sprites", sf.StyleDefault, sf.DefaultContextSettings())
+    renderWindow.SetVSyncEnabled(true)
+    texture, _ := sf.NewTextureFromFile("megaman.png", nil)
+    sprite, _ := sf.NewSprite(texture)
+    sprite.SetPosition(sf.Vector2f{10, 50})
  
     for renderWindow.IsOpen() {
         select {
@@ -33,12 +37,16 @@ func main() {
  
                 }
             }
+            if sprite.GetPosition().X == 10 {
+                delta = 10
+            } 
+            if sprite.GetPosition().X == 700 {
+                delta = -10
+            }
+            sprite.Move(sf.Vector2f{delta, 0})
         }
  
         renderWindow.Clear(sf.ColorWhite())
-        texture, _ := sf.NewTextureFromFile("megaman.png", nil)
-        sprite, _ := sf.NewSprite(texture)
-        sprite.SetPosition(sf.Vector2f{10, 50})
         renderWindow.Draw(sprite, sf.DefaultRenderStates())
         renderWindow.Display()
     }
