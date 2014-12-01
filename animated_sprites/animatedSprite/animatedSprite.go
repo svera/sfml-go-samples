@@ -1,4 +1,4 @@
-package animatedSprite
+package animation
 
 import (
     sf "bitbucket.org/krepa098/gosfml2"
