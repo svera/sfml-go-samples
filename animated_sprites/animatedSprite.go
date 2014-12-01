@@ -109,7 +109,8 @@ func (this *AnimatedSprite) GetLocalBounds() sf.FloatRect {
 }
 
 func (this *AnimatedSprite) GetGlobalBounds() sf.FloatRect {
-    return sf.NewTransformable().GetTransform().TransformRect(this.GetLocalBounds())
+    transform := sf.NewTransformable().GetTransform()
+    return transform.TransformRect(this.GetLocalBounds())
 }
 
 func (this *AnimatedSprite) IsLooped() bool {
@@ -147,14 +148,6 @@ func (this *AnimatedSprite) SetFrame(newFrame uint8, resetTime bool) {
 
     if (resetTime) {
         this.m_currentTime = 0.0
-    }
-}
-
-func (this *AnimatedSprite) draw(target sf.RenderTarget, states sf.RenderStates) {
-    if this.m_animation != nil && this.m_texture != nil {
-        states.Transform *= sf.NewTransformable().GetTransform()
-        states.Texture = this.m_texture
-        target.Draw(this.m_vertices, 4, sf.Quads, states)
     }
 }
 
