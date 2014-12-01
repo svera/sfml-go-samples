@@ -2,22 +2,22 @@ package animatedSprite
 
 import (
     sf "bitbucket.org/krepa098/gosfml2"
-    "sergio/sfml-go-samples/animated_sprites/animation"
-    "time"
+    "sergio/animated_sprites/animation"
+    "math"
 )
 
 type AnimatedSprite struct {
     m_animation *animation.Animation
-    m_frameTime time.Time
-    m_currentTime time.Time
+    m_frameTime uint
+    m_currentTime uint
     m_currentFrame uint8
     m_isPaused bool
     m_isLooped bool
-    m_texture sf.Texture
+    m_texture *sf.Texture
     m_vertices [4]sf.Vertex
 }
 
-func NewAnimatedSrite(frameTime time.Time, paused bool, looped bool) AnimatedSprite {
+func NewAnimatedSrite(frameTime uint, paused bool, looped bool) AnimatedSprite {
     a := new(AnimatedSprite)
     a.m_animation = nil
     a.m_frameTime = frameTime
@@ -27,16 +27,16 @@ func NewAnimatedSrite(frameTime time.Time, paused bool, looped bool) AnimatedSpr
     return *a
 }
 
-func (this *AnimatedSprite) Update(deltaTime time.Time) {
+func (this *AnimatedSprite) Update(deltaTime uint) {
 // if not paused and we have a valid animation
-    if !this.m_isPaused && this.m_animation {
+    if !this.m_isPaused && this.m_animation != nil {
         // add delta time
         this.m_currentTime += deltaTime
 
         // if current time is bigger then the frame time advance one frame
         if this.m_currentTime >= this.m_frameTime {
             // reset time, but keep the remainder
-            this.m_currentTime = sf.Microseconds(this.m_currentTime.AsMicroseconds() % this.m_frameTime.AsMicroseconds())
+            this.m_currentTime = this.m_currentTime % this.m_frameTime
 
             // get next Frame index
             if this.m_currentFrame + 1 < this.m_animation.GetSize() {
@@ -57,18 +57,18 @@ func (this *AnimatedSprite) Update(deltaTime time.Time) {
     }
 }
 
-func (this *AnimatedSprite) SetAnimation(animation Animation) {
+func (this *AnimatedSprite) SetAnimation(animation *animation.Animation) {
     this.m_animation = animation
-    this.m_texture = m_animation.GetSpriteSheet()
+    this.m_texture = this.m_animation.GetSpriteSheet()
     this.m_currentFrame = 0
-    this.SetFrame(this.m_currentFrame)
+    this.SetFrame(this.m_currentFrame, true)
 }
 
-func (this *AnimatedSprite) SetFrameTime(time time.Time) {
+func (this *AnimatedSprite) SetFrameTime(time uint) {
     this.m_frameTime = time
 }
 
-func (this *AnimatedSprite) Play(animation ...Animation) {
+func (this *AnimatedSprite) Play(animation ...*animation.Animation) {
     if len(animation) > 0 && this.GetAnimation() != animation[0] {
         this.SetAnimation(animation[0])
     }
@@ -82,7 +82,7 @@ func (this *AnimatedSprite) Pause() {
 func (this *AnimatedSprite) Stop() {
     this.m_isPaused = true
     this.m_currentFrame = 0;
-    this.SetFrame(this.m_currentFrame)
+    this.SetFrame(this.m_currentFrame, true)
 }
 
 func (this *AnimatedSprite) SetLooped(looped bool) {
@@ -90,26 +90,26 @@ func (this *AnimatedSprite) SetLooped(looped bool) {
 }
 
 func (this *AnimatedSprite) SetColor(color sf.Color) {
-    this.m_vertices[0].color = color
-    this.m_vertices[1].color = color
-    this.m_vertices[2].color = color
-    this.m_vertices[3].color = color
+    this.m_vertices[0].Color = color
+    this.m_vertices[1].Color = color
+    this.m_vertices[2].Color = color
+    this.m_vertices[3].Color = color
 }
 
-func (this *AnimatedSprite) GetAnimation() *Animation {
+func (this *AnimatedSprite) GetAnimation() *animation.Animation {
     return this.m_animation
 }
 
 func (this *AnimatedSprite) GetLocalBounds() sf.FloatRect {
     rect := this.m_animation.GetFrame(this.m_currentFrame)
-    width := float(abs(rect.width))
-    height := float(abs(rect.height))
+    width := float32(math.Abs(float64(rect.Width)))
+    height := float32(math.Abs(float64(rect.Height)))
 
-    return sf.FloatRect(0.0, 0.0, width, height)
+    return sf.FloatRect{0.0, 0.0, width, height}
 }
 
 func (this *AnimatedSprite) GetGlobalBounds() sf.FloatRect {
-    return sf.GetTransform().TransformRect(this.GetLocalBounds())
+    return sf.NewTransformable().GetTransform().TransformRect(this.GetLocalBounds())
 }
 
 func (this *AnimatedSprite) IsLooped() bool {
@@ -120,40 +120,40 @@ func (this *AnimatedSprite) IsPlaying() bool {
     return !this.m_isPaused
 }
 
-func (this *AnimatedSprite) GetFrameTime() time.Time {
+func (this *AnimatedSprite) GetFrameTime() uint {
     return this.m_frameTime
 }
 
 func (this *AnimatedSprite) SetFrame(newFrame uint8, resetTime bool) {
-    if this.m_animation {
+    if this.m_animation != nil {
         //calculate new vertex positions and texture coordiantes
         rect := this.m_animation.GetFrame(newFrame)
 
-        this.m_vertices[0].position = sf.Vector2f(0.0, 0.0)
-        this.m_vertices[1].position = sf.Vector2f(0.0, float(rect.height))
-        this.m_vertices[2].position = sf.Vector2f(float(rect.width), float(rect.height))
-        this.m_vertices[3].position = sf.Vector2f(float(rect.width), 0.0)
+        this.m_vertices[0].Position = sf.Vector2f{0.0, 0.0}
+        this.m_vertices[1].Position = sf.Vector2f{0.0, float32(rect.Height)}
+        this.m_vertices[2].Position = sf.Vector2f{float32(rect.Width), float32(rect.Height)}
+        this.m_vertices[3].Position = sf.Vector2f{float32(rect.Width), 0.0}
 
-        left := float(rect.left) + 0.0001
-        right := left + float(rect.width)
-        top := float(rect.top)
-        bottom := top + float(rect.height)
+        left := float32(rect.Left) + 0.0001
+        right := left + float32(rect.Width)
+        top := float32(rect.Top)
+        bottom := top + float32(rect.Height)
 
-        m_vertices[0].texCoords = sf.Vector2f(left, top)
-        m_vertices[1].texCoords = sf.Vector2f(left, bottom)
-        m_vertices[2].texCoords = sf.Vector2f(right, bottom)
-        m_vertices[3].texCoords = sf.Vector2f(right, top)
+        this.m_vertices[0].TexCoords = sf.Vector2f{left, top}
+        this.m_vertices[1].TexCoords = sf.Vector2f{left, bottom}
+        this.m_vertices[2].TexCoords = sf.Vector2f{right, bottom}
+        this.m_vertices[3].TexCoords = sf.Vector2f{right, top}
     }
 
     if (resetTime) {
-        this.m_currentTime = time.Time.Zero
+        this.m_currentTime = 0.0
     }
 }
 
 func (this *AnimatedSprite) draw(target sf.RenderTarget, states sf.RenderStates) {
-    if this.m_animation && this.m_texture {
-        states.Transform *= sf.GetTransform()
-        states.texture = this.m_texture
+    if this.m_animation != nil && this.m_texture != nil {
+        states.Transform *= sf.NewTransformable().GetTransform()
+        states.Texture = this.m_texture
         target.Draw(this.m_vertices, 4, sf.Quads, states)
     }
 }
