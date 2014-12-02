@@ -1,4 +1,4 @@
-package animation
+package animatedSprite
 
 import (
     sf "bitbucket.org/krepa098/gosfml2"
@@ -7,6 +7,7 @@ import (
 )
 
 type AnimatedSprite struct {
+    sf.Transformable
     m_animation *animation.Animation
     m_frameTime uint
     m_currentTime uint
@@ -14,10 +15,10 @@ type AnimatedSprite struct {
     m_isPaused bool
     m_isLooped bool
     m_texture *sf.Texture
-    m_vertices [4]sf.Vertex
+    m_vertices []sf.Vertex
 }
 
-func NewAnimatedSrite(frameTime uint, paused bool, looped bool) AnimatedSprite {
+func NewAnimatedSprite(frameTime uint, paused bool, looped bool) AnimatedSprite {
     a := new(AnimatedSprite)
     a.m_animation = nil
     a.m_frameTime = frameTime
@@ -27,33 +28,26 @@ func NewAnimatedSrite(frameTime uint, paused bool, looped bool) AnimatedSprite {
     return *a
 }
 
-func (this *AnimatedSprite) Update(deltaTime uint) {
+func (this *AnimatedSprite) Update() {
 // if not paused and we have a valid animation
     if !this.m_isPaused && this.m_animation != nil {
-        // add delta time
-        this.m_currentTime += deltaTime
 
-        // if current time is bigger then the frame time advance one frame
-        if this.m_currentTime >= this.m_frameTime {
-            // reset time, but keep the remainder
-            this.m_currentTime = this.m_currentTime % this.m_frameTime
+        // get next Frame index
+        if this.m_currentFrame + 1 < this.m_animation.GetSize() {
+            this.m_currentFrame++
+        } else {
+            // animation has ended
+            this.m_currentFrame = 0 // reset to start
 
-            // get next Frame index
-            if this.m_currentFrame + 1 < this.m_animation.GetSize() {
-                this.m_currentFrame++
-            } else {
-                // animation has ended
-                this.m_currentFrame = 0 // reset to start
-
-                if !this.m_isLooped {
-                    this.m_isPaused = true
-                }
-
+            if !this.m_isLooped {
+                this.m_isPaused = true
             }
 
-            // set the current frame, not reseting the time
-            this.SetFrame(this.m_currentFrame, false)
         }
+
+        // set the current frame, not reseting the time
+        this.SetFrame(this.m_currentFrame, false)
+
     }
 }
 
@@ -151,40 +145,12 @@ func (this *AnimatedSprite) SetFrame(newFrame uint8, resetTime bool) {
     }
 }
 
-/*
-class AnimatedSprite : public sf::Drawable, public sf::Transformable
-{
-public:
-    explicit AnimatedSprite(sf::Time frameTime = sf::seconds(0.2f), bool paused = false, bool looped = true);
-
-    void update(sf::Time deltaTime);
-    void setAnimation(const Animation& animation);
-    void setFrameTime(sf::Time time);
-    void play();
-    void play(const Animation& animation);
-    void pause();
-    void stop();
-    void setLooped(bool looped);
-    void setColor(const sf::Color& color);
-    const Animation* getAnimation() const;
-    sf::FloatRect getLocalBounds() const;
-    sf::FloatRect getGlobalBounds() const;
-    bool isLooped() const;
-    bool isPlaying() const;
-    sf::Time getFrameTime() const;
-    void setFrame(std::size_t newFrame, bool resetTime = true);
-
-private:
-    const Animation* m_animation;
-    sf::Time m_frameTime;
-    sf::Time m_currentTime;
-    std::size_t m_currentFrame;
-    bool m_isPaused;
-    bool m_isLooped;
-    const sf::Texture* m_texture;
-    sf::Vertex m_vertices[4];
-
-    virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
-
-};
-*/
+func (this AnimatedSprite) Draw(target sf.RenderTarget, states sf.RenderStates) {
+    if this.m_animation != nil && this.m_texture != nil {
+        for i, _ := range(states.Transform) {
+            states.Transform[i] *= sf.NewTransformable().GetTransform()[i]
+        }
+        states.Texture = this.m_texture
+        target.DrawPrimitives(this.m_vertices, sf.PrimitiveQuads, states)
+    }
+}
