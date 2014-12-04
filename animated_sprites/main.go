@@ -53,7 +53,7 @@ func main() {
 
     // set up AnimatedSprite
     as := animatedSprite.NewAnimatedSprite(2000, true, false)
-    as.SetPosition(sf.Vector2f{float32(screenDimensions.X / 2), float32(screenDimensions.Y / 2)})
+    as.SetPosition(sf.Vector2f{100, 100})
 
     speed := float32(80.0)
     noKeyWasPressed := true
